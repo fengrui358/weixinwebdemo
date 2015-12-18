@@ -9,12 +9,15 @@ using System.Xml.Linq;
 using Senparc.Weixin.MP;
 using Senparc.Weixin.MP.Entities.Request;
 using Senparc.Weixin.MP.MvcExtension;
+using WeixinWeb.MessageHandlers;
 
 namespace WeixinWeb.Controllers
 {
     public class HomeController : Controller
     {
         private static readonly string Token = WebConfigurationManager.AppSettings["WeixinToken"];//与微信公众账号后台的Token设置保持一致，区分大小写。
+        private static readonly string EncodingAESKey = WebConfigurationManager.AppSettings["WeixinEncodingAESKey"];
+        private static readonly string AppId = WebConfigurationManager.AppSettings["WeixinAppId"];
 
         public ActionResult Index()
         {
@@ -53,26 +56,30 @@ namespace WeixinWeb.Controllers
             }
         }
 
-        //[HttpPost]
-        //[ActionName("Index")]
-        //public ActionResult Post(PostModel postModel)
-        //{
-        //    if (!CheckSignature.Check(postModel.Signature, postModel.Timestamp, postModel.Nonce, Token))
-        //    {
-        //        return Content("参数错误！");
-        //    }
+        /// <summary>
+        /// 使用库的解析
+        /// </summary>
+        /// <param name="postModel"></param>
+        /// <returns></returns>
+        [HttpPost]
+        [ActionName("Index")]
+        public ActionResult Post(PostModel postModel)
+        {
+            if (!CheckSignature.Check(postModel.Signature, postModel.Timestamp, postModel.Nonce, Token))
+            {
+                return Content("参数错误！");
+            }
 
-        //    return Content("success");
-        //    //postModel.Token = Token;
-        //    //postModel.EncodingAESKey = EncodingAESKey;//根据自己后台的设置保持一致
-        //    //postModel.AppId = AppId;//根据自己后台的设置保持一致
+            postModel.Token = Token;
+            postModel.EncodingAESKey = EncodingAESKey;//根据自己后台的设置保持一致
+            postModel.AppId = AppId;//根据自己后台的设置保持一致
 
-        //    //var messageHandler = new CustomMessageHandler(Request.InputStream, postModel);//接收消息
+            var messageHandler = new CustomMessageHandler(Request.InputStream, postModel);//接收消息
 
-        //    //messageHandler.Execute();//执行微信处理过程
+            messageHandler.Execute();//执行微信处理过程
 
-        //    //return new WeixinResult(messageHandler);//返回结果
-        //}
+            return new WeixinResult(messageHandler);//返回结果
+        }
 
         /// <summary>
         /// 未使用框架的原生解析消息
@@ -83,7 +90,7 @@ namespace WeixinWeb.Controllers
         /// <param name="echostr"></param>
         /// <returns></returns>
         [HttpPost]
-        [ActionName("Index")]
+        //[ActionName("Index")]
         public ActionResult OriginalPost(string signature, string timestamp, string nonce, string echostr)
         {
             //消息安全验证代码开始
