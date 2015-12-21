@@ -2,13 +2,16 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text;
 using System.Web;
 using System.Xml.Linq;
 using Senparc.Weixin.Context;
 using Senparc.Weixin.MP.AppStore;
+using Senparc.Weixin.MP.CommonAPIs;
 using Senparc.Weixin.MP.Entities;
 using Senparc.Weixin.MP.Entities.Request;
 using Senparc.Weixin.MP.MessageHandlers;
+using WeixinWeb.Models.Store;
 
 namespace WeixinWeb.MessageHandlers
 {
@@ -30,20 +33,71 @@ namespace WeixinWeb.MessageHandlers
         {
             var responseMessage = base.CreateResponseMessage<ResponseMessageText>(); //ResponseMessageText也可以是News等其他类型
 
-            responseMessage.Content = "这条消息来自DefaultResponseMessage。";
+            StringBuilder sb = new StringBuilder(string.Format("你的OpenId：{0}，你的消息Id：{1}， 你的消息类型{2}， 你的创建时间{3}， 你的消息内容{4}",
+                requestMessage.FromUserName, requestMessage.MsgId, requestMessage.MsgType, requestMessage.CreateTime, responseMessage.Content));
+            sb.AppendLine();
+            sb.AppendLine("回复1：获取用户Token！");
+            responseMessage.Content = sb.ToString();
 
             return responseMessage;
         }
 
         public override IResponseMessageBase OnTextRequest(RequestMessageText requestMessage)
         {
-            
             var responseMessage = base.CreateResponseMessage<ResponseMessageText>(); //ResponseMessageText也可以是News等其他类型
 
-            responseMessage.Content = string.Format("你好吗：{0}，你的消息Id：{1}， 你的消息类型{2}， 你的创建时间{3}",
-                RequestMessage.FromUserName, RequestMessage.MsgId, RequestMessage.MsgType, RequestMessage.CreateTime);
+            switch (requestMessage.Content)
+            {
+                case "1":
+                    GetResponseBy_1(ref responseMessage);
+                    return responseMessage;
+                case "2":
+                    GetResponseBy_2(ref responseMessage);
+                    return responseMessage;
+                default:
+                    var userInfo = CommonApi.GetUserInfo(KeyStore.AccessToken, requestMessage.FromUserName);
+                    StringBuilder sb =
+                        new StringBuilder(string.Format("你的OpenId：{0}，你的消息Id：{1}， 你的消息类型{2}， 你的创建时间{3}， 你的消息内容{4}",
+                            requestMessage.FromUserName, requestMessage.MsgId, requestMessage.MsgType,
+                            requestMessage.CreateTime, responseMessage.Content));
+                    if (userInfo.subscribe != 0)
+                    {
+                        sb.AppendLine("你的详细信息：");
+                        sb.AppendLine("你的昵称：" + userInfo.nickname);
+                        sb.AppendLine("你的头像地址：" + userInfo.headimgurl);
+                        sb.AppendLine("你的语言信息：" + userInfo.language);
+                    }
+                    
+                    sb.AppendLine("回复1：获取用户Token！");
+                    sb.AppendLine("回复2：获取一个链接！");
+                    responseMessage.Content = sb.ToString();
+                    break;
+
+            }
 
             return responseMessage;
+        }
+
+        /// <summary>
+        /// 回复1：获取Token
+        /// </summary>
+        /// <param name="responseMessage"></param>
+        private void GetResponseBy_1(ref ResponseMessageText responseMessage)
+        {
+            StringBuilder sb = new StringBuilder("获取用户Token！");
+            sb.AppendLine(KeyStore.AccessToken);
+            sb.AppendLine(string.Format("Token过期时间{0}",
+                AccessTokenContainer.TryGetItem(KeyStore.AppId).AccessTokenExpireTime));
+            responseMessage.Content = sb.ToString();
+        }
+
+        /// <summary>
+        /// 回复2：获取Url
+        /// </summary>
+        /// <param name="responseMessage"></param>
+        private void GetResponseBy_2(ref ResponseMessageText responseMessage)
+        {
+            responseMessage.Content = "<a href=\"http://fengrui358.vicp.cc/weixin\">点击这里，链接url</a>";
         }
     }
 }
