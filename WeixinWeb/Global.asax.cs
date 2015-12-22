@@ -65,8 +65,8 @@ namespace WeixinWeb
             });
             subButton.sub_button.Add(new SingleViewButton()
             {
-                url = "http://weixin.senparc.com",
-                name = "Url跳转"
+                url = string.Format("{0}Home/OperateMsg", KeyStore.DemoUrl),
+                name = "使用说明"
             });
             bg.button.Add(subButton);
 
