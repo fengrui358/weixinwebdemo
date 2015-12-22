@@ -23,5 +23,10 @@ namespace WeixinWeb.Models.Store
         {
             get { return AccessTokenContainer.GetAccessToken(AppId); }
         }
+
+        public static string DemoUrl
+        {
+            get { return WebConfigurationManager.AppSettings["DemoUrl"]; }
+        }
     }
 }

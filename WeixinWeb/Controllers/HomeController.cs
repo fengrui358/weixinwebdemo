@@ -179,5 +179,10 @@ namespace WeixinWeb.Controllers
 
             return Content(responseXml, "text/xml");//返回结果
         }
+
+        public ActionResult OperateMsg()
+        {
+            return View();
+        }
     }
 }
